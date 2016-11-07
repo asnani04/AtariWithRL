@@ -88,6 +88,7 @@ sess.run(tf.initialize_all_variables())
 
 if os.path.exists('./pongWeights.ckpt'):
 	saver.restore(sess, './pongWeights.ckpt')
+        print("Weights file found. Restoring weights from file...")
 
 
 while True:
