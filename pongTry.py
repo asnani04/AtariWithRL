@@ -1,5 +1,6 @@
 from __future__ import print_function
 import gym
+import os
 import numpy as np
 import tensorflow as tf
 import pickle
@@ -10,7 +11,8 @@ import pickle
 size = 80
 gamma = 0.99
 decayRate = 0.99
-learning_rate = 5e-4
+global_step = tf.Variable(0, trainable=False)
+start_learning_rate = 5e-3
 
 def preProcess(obs):
 	obs = obs[35:195]
@@ -64,6 +66,8 @@ Cache1 = tf.placeholder(tf.float32, shape=[hiddenSize, size**2])
 grad2 = tf.placeholder(tf.float32, shape=[hiddenSize, 1])
 Cache2 = tf.placeholder(tf.float32, shape=[hiddenSize, 1])
 
+learning_rate = tf.train.exponential_decay(start_learning_rate, global_step,
+                                           100000, 0.96, staircase=True)
 modifiedObs = tf.sub(curObs, prevObs)
 
 curHidden = tf.transpose(tf.matmul(tf.transpose(modifiedObs), w1))
@@ -77,8 +81,14 @@ deltaWeights1 = tf.transpose(tf.matmul(tf.transpose(Observations), deltaH))
 weights1Update = tf.assign_add(w1, tf.transpose(learning_rate * grad1 / (tf.sqrt(Cache1) + 1e-5)))
 weights2Update = tf.assign_add(w2, learning_rate * grad2 / (tf.sqrt(Cache2) + 1e-5))
 
+saver = tf.train.Saver({'w1':w1, 'w2':w2})
+
 sess = tf.InteractiveSession()
 sess.run(tf.initialize_all_variables())
+
+if os.path.exists('./pongWeights.ckpt'):
+	saver.restore(sess, './pongWeights.ckpt')
+
 
 while True:
 	if render:
@@ -150,6 +160,7 @@ while True:
 			# print(w1.eval()[0])
 			gradBuffer1 = np.zeros_like(gradBuffer1)
 			gradBuffer2 = np.zeros_like(gradBuffer2)
+			saver.save(sess, './pongWeights.ckpt')
 
 		runningReward = rewardSum if runningReward is None else runningReward * 0.99 + rewardSum * 0.01
 		print('resetting env. episode reward total was %f. running mean: %f' % (rewardSum, runningReward))
