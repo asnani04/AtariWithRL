@@ -22,7 +22,7 @@ class QNetwork():
         self.AW = tf.Variable(tf.random_normal([h_size/2,env.actions]))
         self.VW = tf.Variable(tf.random_normal([h_size/2,1]))
         self.Advantage = tf.matmul(self.streamA,self.AW)
-        self.Value = tf.matmul(self.streamV,self.W)
+        self.Value = tf.matmul(self.streamV,self.VW)
 
 
         #We will combne the two streams to get the final Q-values
@@ -44,7 +44,7 @@ class QNetwork():
         self.updateModel = self.trainer.minimize(self.loss) 
 
 
-class experience_buffer():
+class experienceBuffer():
 
     def __init(self,buffer_size):
         self.buffer = []
